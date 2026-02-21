@@ -1413,6 +1413,91 @@
           }
 
           {
+            recent-windows = section' (
+              { options, ... }:
+              {
+                imports = make-ordered-options [
+                  {
+                    enable = optional types.bool true // {
+                      description = ''
+                        Whether to enable the recent-windows switcher (Alt+Tab style window switching).
+                      '';
+                    };
+                    debounce-ms = nullable types.int // {
+                      description = ''
+                        Delay in milliseconds before committing the focused window to the recent list.
+                      '';
+                    };
+                    open-delay-ms = nullable types.int // {
+                      description = ''
+                        Delay in milliseconds before the switcher UI appears on screen.
+                      '';
+                    };
+                  }
+                  {
+                    highlight = section {
+                      active-color = nullable types.str // {
+                        description = ''
+                          Color for the active window highlight.
+                        '';
+                      };
+                      urgent-color = nullable types.str // {
+                        description = ''
+                          Color for urgent window highlights.
+                        '';
+                      };
+                      padding = nullable float-or-int // {
+                        description = ''
+                          Padding around the window highlight in logical pixels.
+                        '';
+                      };
+                      corner-radius = nullable float-or-int // {
+                        description = ''
+                          Corner radius for the highlight box.
+                        '';
+                      };
+                    };
+                  }
+                  {
+                    previews = section {
+                      max-height = nullable float-or-int // {
+                        description = ''
+                          Maximum height of window previews in pixels.
+                        '';
+                      };
+                      max-scale = nullable float-or-int // {
+                        description = ''
+                          Maximum scale factor for previews.
+                        '';
+                      };
+                    };
+                  }
+                  {
+                    binds = attrs-record' "recent-windows keybind" {
+                      action = required (rename "recent-windows action" kdl.types.kdl-leaf) // {
+                        description = ''
+                          The action for this recent-windows keybind.
+
+                          Typically ${fmt.code "next-window"} or ${fmt.code "previous-window"}.
+
+                          ${fmt.nix-code-block ''
+                            {
+                              ${options.recent-windows}.binds = {
+                                "Super+Tab".action.next-window = {};
+                                "Super+Shift+Tab".action.previous-window = {};
+                              };
+                            }
+                          ''}
+                        '';
+                      };
+                    };
+                  }
+                ];
+              }
+            );
+          }
+
+          {
             input = {
               keyboard = {
                 xkb =
@@ -3631,6 +3716,26 @@
               (nullable leaf "spread" cfg.overview.workspace-shadow.spread)
               (nullable leaf "color" cfg.overview.workspace-shadow.color)
             ])
+          ])
+        ])
+
+        (plain' "recent-windows" [
+          (toggle "off" cfg.recent-windows [
+            (nullable leaf "debounce-ms" cfg.recent-windows.debounce-ms)
+            (nullable leaf "open-delay-ms" cfg.recent-windows.open-delay-ms)
+            (plain' "highlight" [
+              (nullable leaf "active-color" cfg.recent-windows.highlight.active-color)
+              (nullable leaf "urgent-color" cfg.recent-windows.highlight.urgent-color)
+              (nullable leaf "padding" cfg.recent-windows.highlight.padding)
+              (nullable leaf "corner-radius" cfg.recent-windows.highlight.corner-radius)
+            ])
+            (plain' "previews" [
+              (nullable leaf "max-height" cfg.recent-windows.previews.max-height)
+              (nullable leaf "max-scale" cfg.recent-windows.previews.max-scale)
+            ])
+            (plain' "binds" (lib.mapAttrsToList (
+              name: cfg: plain name [(lib.mapAttrsToList leaf cfg.action)]
+            ) cfg.recent-windows.binds))
           ])
         ])
 
